@@ -30,10 +30,12 @@ This action will open a PagerDuty Maintenance Window for the specified service(s
         uses: im-open/open-pagerduty-maintenance-window@initial-action
         with:
           pagerduty-api-key: ${{secrets.PAGERDUTY_API_KEY}}
-          decription: 'Code deployment from GitHub Actions'
+          description: 'Code deployment from GitHub Actions'
           minutes: 15
-          service-ids: [ 'P0ABCDE' ]
-      - run: deploy-the-code.sh
+          service-ids: '[ "P0ABCDE" ]'
+      - run: |
+          echo "The maintenance window ID is: ${{ steps.open-window.outputs.maintenance-window-id }}"
+          deploy-the-code.sh
 ```
 
 ## Recompiling
