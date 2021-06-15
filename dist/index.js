@@ -4433,9 +4433,11 @@ try {
       core.setOutput('maintenance-window-id', response.data.maintenance_window.id);
     })
     .catch(function (error) {
-      core.setFailed(`An error occurred opening the PagerDuty maintenance window: ${error}`);
+      core.setFailed(
+        `An error occurred making the request to open the PagerDuty maintenance window: ${error}`
+      );
       return;
     });
 } catch (error) {
-  core.setFailed(`An error occurred while opening PagerDuty window: ${error}`);
+  core.setFailed(`An error occurred while opening PagerDuty maintenance window: ${error}`);
 }
