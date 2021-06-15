@@ -7,7 +7,7 @@ inputs:
     required: true
   description:
     description: 'A description for the maintenance window'
-    required: true
+    required: false
   minutes:
     description: 'The number of minutes to open the window for.  Defaults to 20.'
     required: true

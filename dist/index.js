@@ -4393,9 +4393,17 @@ var pagerdutyApiKey = core.getInput('pagerduty-api-key');
 var description = core.getInput('description');
 var minutes = parseInt(core.getInput('minutes'));
 var serviceIdsInput = core.getInput('service-ids');
-var serviceIds = JSON.parse(serviceIdsInput);
 core.info(`Opening PagerDuty window for ${description}`);
 try {
+  if (!pagerdutyApiKey) {
+    core.setFailed('The pagerduty-api-key was empty but must be provided');
+    return;
+  }
+  if (!serviceIdsInput) {
+    core.setFailed('The service-ids was empty but must be provided');
+    return;
+  }
+  const serviceIds = JSON.parse(serviceIdsInput);
   const startDate = new Date();
   const endDate = add(startDate, {
     minutes
