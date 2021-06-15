@@ -3680,7 +3680,11 @@ var require_package = __commonJS({
           path: './dist/axios.min.js',
           threshold: '5kB'
         }
-      ]
+      ],
+      _resolved: 'https://registry.npmjs.org/axios/-/axios-0.21.1.tgz',
+      _integrity:
+        'sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==',
+      _from: 'axios@0.21.1'
     };
   }
 });
