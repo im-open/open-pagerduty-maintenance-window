@@ -5,10 +5,10 @@ This action will open a PagerDuty Maintenance Window for the specified service(s
 ## Inputs
 | Parameter           | Is Required | Description                                                    |
 | ------------------- | ----------- | -------------------------------------------------------------- |
-| `pagerduty-api-key` | true        | The PagerDuty api key that allows access to your services.     |
-| `service-ids`       | true        | The number of minutes to open the window for.  Defaults to 20. |
+| `pagerduty-api-key` | true        | The PagerDuty API Key that allows access to your services.     |
+| `service-ids`       | true        | A string array of PagerDuty Service IDs.                       |
 | `description`       | false       | A description of the maintenance window. Defaults to empty.    |
-| `minutes`           | false       | A string array of PagerDuty Service IDs.                       |
+| `minutes`           | false       | The number of minutes to open the window for.  Defaults to 20. |
 
 ## Outputs
 | Parameter               | Description                                      |
