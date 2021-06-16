@@ -1,13 +1,25 @@
-name: 'Custom Action Template'
+name: 'Open a PagerDuty Maintenance Window'
 
-description: 'Add description here'
+description: 'Opens a PagerDuty maintenance window for the specified service(s) and amount of time.'
 inputs:
-  input-1:
-    description: 'Add a description here'
+  pagerduty-api-key:
+    description: 'The PagerDuty API Key that allows access to your services'
     required: true
-  input-2:
-    description: 'Add a description here'
+  description:
+    description: 'A description for the maintenance window'
     required: false
+  minutes:
+    description: 'The number of minutes to open the window for.  Defaults to 20.'
+    required: true
+    default: 20
+  service-ids:
+    description: 'A string array of PagerDuty Service IDs'
+    required: true
+
+outputs:
+  maintenance-window-id:
+    description: 'The ID of the maintenance window that was just opened.'    
+
 runs:
   using: 'node12'
   main: 'dist/index.js'
