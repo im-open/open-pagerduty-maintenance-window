@@ -1,12 +1,12 @@
 # Open PagerDuty Maintenance Window
 
-This action will open a PagerDuty Maintenance Window for the specified service(s) for the specified amount of time.  It returns the window ID as an output so the window can be closed prior to the expiration if desired.
+This action will open a PagerDuty Maintenance Window for the specified service for the specified amount of time.  It returns the window ID as an output so the window can be closed prior to the expiration if desired.
 
 ## Inputs
 | Parameter           | Is Required | Description                                                    |
 | ------------------- | ----------- | -------------------------------------------------------------- |
 | `pagerduty-api-key` | true        | The PagerDuty API Key that allows access to your services.     |
-| `service-ids`       | true        | A string array of PagerDuty Service IDs.                       |
+| `service-id`        | true        | A PagerDuty Service ID.                                        |
 | `description`       | false       | A description of the maintenance window. Defaults to empty.    |
 | `minutes`           | false       | The number of minutes to open the window for.  Defaults to 20. |
 
@@ -27,10 +27,10 @@ This action will open a PagerDuty Maintenance Window for the specified service(s
 
       - name: Open a window
         id: open-window
-        uses: im-open/open-pagerduty-maintenance-window@v1.0.0
+        uses: im-open/open-pagerduty-maintenance-window@v1.0.1
         with:
           pagerduty-api-key: ${{secrets.PAGERDUTY_API_KEY}}
-          service-ids: '[ "P0ABCDE" ]'
+          service-id: 'P0ABCDE'
           description: 'Code deployment from GitHub Actions'
           minutes: 15
       - run: |

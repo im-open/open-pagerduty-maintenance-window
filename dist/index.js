@@ -4389,21 +4389,16 @@ var core = require_core();
 var add = require_add();
 var format = require_format();
 var axios = require_axios2();
-var pagerdutyApiKey = core.getInput('pagerduty-api-key');
+var requiredArgOptions = {
+  required: true,
+  trimWhitespace: true
+};
+var pagerdutyApiKey = core.getInput('pagerduty-api-key', requiredArgOptions);
+var serviceIdInput = core.getInput('service-id', requiredArgOptions);
 var description = core.getInput('description');
 var minutes = parseInt(core.getInput('minutes'));
-var serviceIdsInput = core.getInput('service-ids');
 core.info(`Opening PagerDuty window for ${description}`);
 try {
-  if (!pagerdutyApiKey) {
-    core.setFailed('The pagerduty-api-key was empty but must be provided');
-    return;
-  }
-  if (!serviceIdsInput) {
-    core.setFailed('The service-ids was empty but must be provided');
-    return;
-  }
-  const serviceIds = JSON.parse(serviceIdsInput);
   const startDate = new Date();
   const endDate = add(startDate, {
     minutes
@@ -4417,12 +4412,12 @@ try {
       start_time,
       end_time,
       description,
-      services: serviceIds.map(id => {
-        return {
-          id,
+      services: [
+        {
+          id: serviceIdInput,
           type: 'service'
-        };
-      })
+        }
+      ]
     }
   };
   axios({
