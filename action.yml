@@ -1,6 +1,6 @@
 name: 'Open a PagerDuty Maintenance Window'
 
-description: 'Opens a PagerDuty maintenance window for the specified service(s) and amount of time.'
+description: 'Opens a PagerDuty maintenance window for the specified service and amount of time.'
 inputs:
   pagerduty-api-key:
     description: 'The PagerDuty API Key that allows access to your services'
@@ -11,14 +11,14 @@ inputs:
   minutes:
     description: 'The number of minutes to open the window for.  Defaults to 20.'
     required: true
-    default: 20
-  service-ids:
-    description: 'A string array of PagerDuty Service IDs'
+    default: '20'
+  service-id:
+    description: 'A single pagerduty service id'
     required: true
 
 outputs:
   maintenance-window-id:
-    description: 'The ID of the maintenance window that was just opened.'    
+    description: 'The ID of the maintenance window that was just opened.'
 
 runs:
   using: 'node12'
