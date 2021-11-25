@@ -1,6 +1,8 @@
 # Open PagerDuty Maintenance Window
 
 This action will open a PagerDuty Maintenance Window for the specified service for the specified amount of time.  It returns the window ID as an output so the window can be closed prior to the expiration if desired.
+    
+## Index 
 
 - [Inputs](#inputs)
 - [Outputs](#outputs)
@@ -36,7 +38,7 @@ This action will open a PagerDuty Maintenance Window for the specified service f
 
       - name: Open a window
         id: open-window
-        uses: im-open/open-pagerduty-maintenance-window@v1.0.2
+        uses: im-open/open-pagerduty-maintenance-window@v1.0.3
         with:
           pagerduty-api-key: ${{secrets.PAGERDUTY_API_KEY}}
           service-id: 'P0ABCDE'
@@ -88,3 +90,5 @@ This project has adopted the [im-open's Code of Conduct](https://github.com/im-o
 ## License
 
 Copyright &copy; 2021, Extend Health, LLC. Code released under the [MIT license](LICENSE).
+
+[git-version-lite]: https://github.com/im-open/git-version-lite
