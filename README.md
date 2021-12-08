@@ -38,7 +38,7 @@ This action will open a PagerDuty Maintenance Window for the specified service f
 
       - name: Open a window
         id: open-window
-        uses: im-open/open-pagerduty-maintenance-window@v1.0.3
+        uses: im-open/open-pagerduty-maintenance-window@v1.0.4
         with:
           pagerduty-api-key: ${{secrets.PAGERDUTY_API_KEY}}
           service-id: 'P0ABCDE'
