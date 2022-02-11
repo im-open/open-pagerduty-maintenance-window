@@ -24,6 +24,14 @@ try {
   const start_time = `${format(startDate, 'yyyy-MM-dd')}T${format(startDate, 'HH:mm:sszzzz')}Z`;
   const end_time = `${format(endDate, 'yyyy-MM-dd')}T${format(endDate, 'HH:mm:sszzzz')}Z`;
   core.info(`Window will be open from ${start_time} -> ${end_time}`);
+  
+  serviceIds = serviceIdInput && serviceIdInput
+    .split(',')
+    .map(serviceId => {
+      id: serviceId,
+      type: 'service'
+    }
+  );
 
   const maintenanceWindow = {
     maintenance_window: {
@@ -31,12 +39,7 @@ try {
       start_time,
       end_time,
       description,
-      services: [
-        {
-          id: serviceIdInput,
-          type: 'service'
-        }
-      ]
+      services: serviceIds
     }
   };
 
