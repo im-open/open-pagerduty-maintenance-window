@@ -28,7 +28,7 @@ try {
   serviceIds = serviceIdInput && serviceIdInput
     .split(',')
     .map(serviceId => {
-      id: serviceId,
+      id: serviceId.trim(),
       type: 'service'
     }
   );
