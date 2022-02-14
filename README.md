@@ -39,7 +39,7 @@ This action will open a PagerDuty Maintenance Window for the specified service f
 
       - name: Open a window
         id: open-window
-        uses: im-open/open-pagerduty-maintenance-window@v1.0.4
+        uses: im-open/open-pagerduty-maintenance-window@v1.1.0
         with:
           pagerduty-api-key: ${{secrets.PAGERDUTY_API_KEY}}
           description: 'Code deployment from GitHub Actions'
@@ -47,7 +47,7 @@ This action will open a PagerDuty Maintenance Window for the specified service f
           service-id: 'P0ABCDE' 
 
           # Or multiple service IDs
-          service-ids: 'P2W124M,PQQA092,P652LHP,P91AMWC'
+          # service-ids: 'P2W124M,PQQA092,P652LHP,P91AMWC'
           
       - run: |
           echo "The maintenance window ID is: ${{ steps.open-window.outputs.maintenance-window-id }}"
