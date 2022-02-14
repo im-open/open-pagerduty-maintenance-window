@@ -15,7 +15,7 @@ inputs:
   service-id:
     description: 'A single pagerduty service id'
   service-ids:
-    description: 'A comma seperated list of pagerduty service id'
+    description: 'A comma seperated list of pagerduty service ids'
 
 outputs:
   maintenance-window-id:
