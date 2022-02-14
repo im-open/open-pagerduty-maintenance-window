@@ -9,9 +9,15 @@ const requiredArgOptions = {
 };
 
 const pagerdutyApiKey = core.getInput('pagerduty-api-key', requiredArgOptions);
-const serviceIdInput = core.getInput('service-id', requiredArgOptions);
+const serviceIdInput = core.getInput('service-id', { trimWhitespace: true });
+const serviceIdsInput = core.getInput('service-ids', { trimWhitespace: true });
 const description = core.getInput('description');
 const minutes = parseInt(core.getInput('minutes'));
+
+if (!serviceIdInput && !serviceIdsInput) {
+  core.setFailed('Missing service-id or service-ids argument');
+  return;
+}
 
 core.info(`Opening PagerDuty window for ${description}`);
 
@@ -24,14 +30,14 @@ try {
   const start_time = `${format(startDate, 'yyyy-MM-dd')}T${format(startDate, 'HH:mm:sszzzz')}Z`;
   const end_time = `${format(endDate, 'yyyy-MM-dd')}T${format(endDate, 'HH:mm:sszzzz')}Z`;
   core.info(`Window will be open from ${start_time} -> ${end_time}`);
-  
-  serviceIds = serviceIdInput && serviceIdInput
-    .split(',')
-    .map(serviceId => {
+
+  serviceIds = [serviceIdInput]
+    .concat(serviceIdsInput.split(','))
+    .filter(serviceId => serviceId)
+    .map(serviceId => ({
       id: serviceId.trim(),
       type: 'service'
-    }
-  );
+    }));
 
   const maintenanceWindow = {
     maintenance_window: {

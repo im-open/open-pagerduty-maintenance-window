@@ -4636,9 +4636,14 @@ var requiredArgOptions = {
   trimWhitespace: true
 };
 var pagerdutyApiKey = core.getInput('pagerduty-api-key', requiredArgOptions);
-var serviceIdInput = core.getInput('service-id', requiredArgOptions);
+var serviceIdInput = core.getInput('service-id', { trimWhitespace: true });
+var serviceIdsInput = core.getInput('service-ids', { trimWhitespace: true });
 var description = core.getInput('description');
 var minutes = parseInt(core.getInput('minutes'));
+if (!serviceIdInput && !serviceIdsInput) {
+  core.setFailed('Missing service-id or service-ids argument');
+  return;
+}
 core.info(`Opening PagerDuty window for ${description}`);
 try {
   const startDate = new Date();
@@ -4648,18 +4653,20 @@ try {
   const start_time = `${format(startDate, 'yyyy-MM-dd')}T${format(startDate, 'HH:mm:sszzzz')}Z`;
   const end_time = `${format(endDate, 'yyyy-MM-dd')}T${format(endDate, 'HH:mm:sszzzz')}Z`;
   core.info(`Window will be open from ${start_time} -> ${end_time}`);
+  serviceIds = [serviceIdInput]
+    .concat(serviceIdsInput.split(','))
+    .filter(serviceId => serviceId)
+    .map(serviceId => ({
+      id: serviceId.trim(),
+      type: 'service'
+    }));
   const maintenanceWindow = {
     maintenance_window: {
       type: 'maintenance_window',
       start_time,
       end_time,
       description,
-      services: [
-        {
-          id: serviceIdInput,
-          type: 'service'
-        }
-      ]
+      services: serviceIds
     }
   };
   axios({
