@@ -4,13 +4,12 @@ const format = require('date-fns/format');
 const axios = require('axios');
 
 const requiredArgOptions = {
-  required: true,
-  trimWhitespace: true
+  required: true
 };
 
 const pagerdutyApiKey = core.getInput('pagerduty-api-key', requiredArgOptions);
-const serviceIdInput = core.getInput('service-id', { trimWhitespace: true });
-const serviceIdsInput = core.getInput('service-ids', { trimWhitespace: true });
+const serviceIdInput = core.getInput('service-id');
+const serviceIdsInput = core.getInput('service-ids');
 const description = core.getInput('description');
 const minutes = parseInt(core.getInput('minutes'));
 
@@ -31,13 +30,20 @@ try {
   const end_time = `${format(endDate, 'yyyy-MM-dd')}T${format(endDate, 'HH:mm:sszzzz')}Z`;
   core.info(`Window will be open from ${start_time} -> ${end_time}`);
 
-  serviceIds = [serviceIdInput]
-    .concat(serviceIdsInput.split(','))
-    .filter(serviceId => serviceId)
+  const serviceIds = [serviceIdInput]
+    .concat(serviceIdsInput ? serviceIdsInput.split(',') : [])
+    .filter(serviceId => serviceId && serviceId.trim())
     .map(serviceId => ({
       id: serviceId.trim(),
       type: 'service'
     }));
+
+  if (serviceIds.length == 0) {
+    core.setFailed('Missing service-id');
+    return;
+  }
+
+  core.info(`Service IDs ${JSON.stringify(serviceIds.map(value => value.id))}`);
 
   const maintenanceWindow = {
     maintenance_window: {
