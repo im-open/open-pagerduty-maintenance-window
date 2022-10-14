@@ -39,7 +39,7 @@ This action will open a PagerDuty Maintenance Window for the specified service f
 
       - name: Open a window
         id: open-window
-        uses: im-open/open-pagerduty-maintenance-window@v1.1.4
+        uses: im-open/open-pagerduty-maintenance-window@v1.2.0
         with:
           pagerduty-api-key: ${{secrets.PAGERDUTY_API_KEY}}
           description: 'Code deployment from GitHub Actions'
