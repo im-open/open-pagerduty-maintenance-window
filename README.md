@@ -35,7 +35,7 @@ This action will open a PagerDuty Maintenance Window for the specified service f
     deploy-the-code:
     runs-on: [self-hosted, ubuntu-20.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Open a window
         id: open-window
