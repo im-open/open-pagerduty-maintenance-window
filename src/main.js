@@ -14,7 +14,7 @@ const description = core.getInput('description');
 const minutes = parseInt(core.getInput('minutes'));
 
 if (!serviceIdInput && !serviceIdsInput) {
-  core.setFailed('Missing service-id or service-ids argument');
+  core.setFailed('Missing service-id or service-ids argument.  One of the args must be provided');
   return;
 }
 
@@ -39,7 +39,7 @@ try {
     }));
 
   if (serviceIds.length == 0) {
-    core.setFailed('Missing service-id');
+    core.setFailed('Missing service-ids');
     return;
   }
 
@@ -72,10 +72,10 @@ try {
     })
     .catch(function (error) {
       core.setFailed(
-        `An error occurred making the request to open the PagerDuty maintenance window: ${error}`
+        `An error occurred making the request to open the PagerDuty maintenance window: ${error.message}`
       );
       return;
     });
 } catch (error) {
-  core.setFailed(`An error occurred while opening PagerDuty maintenance window: ${error}`);
+  core.setFailed(`An error occurred while opening PagerDuty maintenance window: ${error.message}`);
 }

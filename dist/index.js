@@ -6778,7 +6778,7 @@ var serviceIdsInput = core.getInput('service-ids');
 var description = core.getInput('description');
 var minutes = parseInt(core.getInput('minutes'));
 if (!serviceIdInput && !serviceIdsInput) {
-  core.setFailed('Missing service-id or service-ids argument');
+  core.setFailed('Missing service-id or service-ids argument.  One of the args must be provided');
   return;
 }
 core.info(`Opening PagerDuty window for ${description}`);
@@ -6798,7 +6798,7 @@ try {
       type: 'service'
     }));
   if (serviceIds.length == 0) {
-    core.setFailed('Missing service-id');
+    core.setFailed('Missing service-ids');
     return;
   }
   core.info(`Service IDs ${JSON.stringify(serviceIds.map(value => value.id))}`);
@@ -6828,10 +6828,10 @@ try {
     })
     .catch(function (error) {
       core.setFailed(
-        `An error occurred making the request to open the PagerDuty maintenance window: ${error}`
+        `An error occurred making the request to open the PagerDuty maintenance window: ${error.message}`
       );
       return;
     });
 } catch (error) {
-  core.setFailed(`An error occurred while opening PagerDuty maintenance window: ${error}`);
+  core.setFailed(`An error occurred while opening PagerDuty maintenance window: ${error.message}`);
 }
