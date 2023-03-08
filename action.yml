@@ -1,6 +1,6 @@
-name: 'Open a PagerDuty Maintenance Window'
+name: Open a PagerDuty Maintenance Window
+description: Opens a PagerDuty maintenance window for the specified service and amount of time.
 
-description: 'Opens a PagerDuty maintenance window for the specified service and amount of time.'
 inputs:
   pagerduty-api-key:
     description: 'The PagerDuty API Key that allows access to your services'
