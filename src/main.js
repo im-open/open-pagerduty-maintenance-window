@@ -31,10 +31,7 @@ try {
   core.info(`Window will be open from ${start_time} -> ${end_time}`);
 
   const serviceIds = [serviceIdInput]
-    .concat(serviceIdsInput ? serviceIdsInput
-      .split('\n')
-      .flatMap(x => x.split(',')
-    ) : [])
+    .concat(serviceIdsInput ? serviceIdsInput.split('\n').flatMap(x => x.split(',')) : [])
     .filter(x => x?.trim())
     .filter((id, index, ids) => id && ids.indexOf(id) === index)
     .map(id => ({ id, type: 'service' }));
