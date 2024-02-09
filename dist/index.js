@@ -5395,6 +5395,24 @@ var require_follow_redirects = __commonJS({
     var Writable = require('stream').Writable;
     var assert = require('assert');
     var debug = require_debug();
+    var useNativeURL = false;
+    try {
+      assert(new URL2());
+    } catch (error) {
+      useNativeURL = error.code === 'ERR_INVALID_URL';
+    }
+    var preservedUrlFields = [
+      'auth',
+      'host',
+      'hostname',
+      'href',
+      'path',
+      'pathname',
+      'port',
+      'protocol',
+      'query',
+      'search'
+    ];
     var events = ['abort', 'aborted', 'connect', 'error', 'socket', 'timeout'];
     var eventHandlers = Object.create(null);
     events.forEach(function (event) {
@@ -5402,19 +5420,22 @@ var require_follow_redirects = __commonJS({
         this._redirectable.emit(event, arg1, arg2, arg3);
       };
     });
+    var InvalidUrlError = createErrorType('ERR_INVALID_URL', 'Invalid URL', TypeError);
     var RedirectionError = createErrorType(
       'ERR_FR_REDIRECTION_FAILURE',
       'Redirected request failed'
     );
     var TooManyRedirectsError = createErrorType(
       'ERR_FR_TOO_MANY_REDIRECTS',
-      'Maximum number of redirects exceeded'
+      'Maximum number of redirects exceeded',
+      RedirectionError
     );
     var MaxBodyLengthExceededError = createErrorType(
       'ERR_FR_MAX_BODY_LENGTH_EXCEEDED',
       'Request body larger than maxBodyLength limit'
     );
     var WriteAfterEndError = createErrorType('ERR_STREAM_WRITE_AFTER_END', 'write after end');
+    var destroy = Writable.prototype.destroy || noop;
     function RedirectableRequest(options, responseCallback) {
       Writable.call(this);
       this._sanitizeOptions(options);
@@ -5430,23 +5451,36 @@ var require_follow_redirects = __commonJS({
       }
       var self = this;
       this._onNativeResponse = function (response) {
-        self._processResponse(response);
+        try {
+          self._processResponse(response);
+        } catch (cause) {
+          self.emit(
+            'error',
+            cause instanceof RedirectionError ? cause : new RedirectionError({ cause })
+          );
+        }
       };
       this._performRequest();
     }
     RedirectableRequest.prototype = Object.create(Writable.prototype);
     RedirectableRequest.prototype.abort = function () {
-      abortRequest(this._currentRequest);
+      destroyRequest(this._currentRequest);
+      this._currentRequest.abort();
       this.emit('abort');
+    };
+    RedirectableRequest.prototype.destroy = function (error) {
+      destroyRequest(this._currentRequest, error);
+      destroy.call(this, error);
+      return this;
     };
     RedirectableRequest.prototype.write = function (data, encoding, callback) {
       if (this._ending) {
         throw new WriteAfterEndError();
       }
-      if (!(typeof data === 'string' || (typeof data === 'object' && 'length' in data))) {
+      if (!isString(data) && !isBuffer(data)) {
         throw new TypeError('data should be a string, Buffer or Uint8Array');
       }
-      if (typeof encoding === 'function') {
+      if (isFunction(encoding)) {
         callback = encoding;
         encoding = null;
       }
@@ -5466,10 +5500,10 @@ var require_follow_redirects = __commonJS({
       }
     };
     RedirectableRequest.prototype.end = function (data, encoding, callback) {
-      if (typeof data === 'function') {
+      if (isFunction(data)) {
         callback = data;
         data = encoding = null;
-      } else if (typeof encoding === 'function') {
+      } else if (isFunction(encoding)) {
         callback = encoding;
         encoding = null;
       }
@@ -5519,6 +5553,7 @@ var require_follow_redirects = __commonJS({
         self.removeListener('abort', clearTimer);
         self.removeListener('error', clearTimer);
         self.removeListener('response', clearTimer);
+        self.removeListener('close', clearTimer);
         if (callback) {
           self.removeListener('timeout', callback);
         }
@@ -5538,6 +5573,7 @@ var require_follow_redirects = __commonJS({
       this.on('abort', clearTimer);
       this.on('error', clearTimer);
       this.on('response', clearTimer);
+      this.on('close', clearTimer);
       return this;
     };
     ['flushHeaders', 'getHeader', 'setNoDelay', 'setSocketKeepAlive'].forEach(function (method) {
@@ -5576,22 +5612,23 @@ var require_follow_redirects = __commonJS({
       var protocol = this._options.protocol;
       var nativeProtocol = this._options.nativeProtocols[protocol];
       if (!nativeProtocol) {
-        this.emit('error', new TypeError('Unsupported protocol ' + protocol));
-        return;
+        throw new TypeError('Unsupported protocol ' + protocol);
       }
       if (this._options.agents) {
-        var scheme = protocol.substr(0, protocol.length - 1);
+        var scheme = protocol.slice(0, -1);
         this._options.agent = this._options.agents[scheme];
       }
       var request = (this._currentRequest = nativeProtocol.request(
         this._options,
         this._onNativeResponse
       ));
-      this._currentUrl = url.format(this._options);
       request._redirectable = this;
-      for (var e = 0; e < events.length; e++) {
-        request.on(events[e], eventHandlers[events[e]]);
+      for (var event of events) {
+        request.on(event, eventHandlers[event]);
       }
+      this._currentUrl = /^\//.test(this._options.path)
+        ? url.format(this._options)
+        : this._options.path;
       if (this._isRedirect) {
         var i = 0;
         var self = this;
@@ -5634,12 +5671,22 @@ var require_follow_redirects = __commonJS({
         this._requestBodyBuffers = [];
         return;
       }
-      abortRequest(this._currentRequest);
+      destroyRequest(this._currentRequest);
       response.destroy();
       if (++this._redirectCount > this._options.maxRedirects) {
-        this.emit('error', new TooManyRedirectsError());
-        return;
+        throw new TooManyRedirectsError();
       }
+      var requestHeaders;
+      var beforeRedirect = this._options.beforeRedirect;
+      if (beforeRedirect) {
+        requestHeaders = Object.assign(
+          {
+            Host: response.req.getHeader('host')
+          },
+          this._options.headers
+        );
+      }
+      var method = this._options.method;
       if (
         ((statusCode === 301 || statusCode === 302) && this._options.method === 'POST') ||
         (statusCode === 303 && !/^(?:GET|HEAD)$/.test(this._options.method))
@@ -5649,44 +5696,35 @@ var require_follow_redirects = __commonJS({
         removeMatchingHeaders(/^content-/i, this._options.headers);
       }
       var currentHostHeader = removeMatchingHeaders(/^host$/i, this._options.headers);
-      var currentUrlParts = url.parse(this._currentUrl);
+      var currentUrlParts = parseUrl(this._currentUrl);
       var currentHost = currentHostHeader || currentUrlParts.host;
       var currentUrl = /^\w+:/.test(location)
         ? this._currentUrl
         : url.format(Object.assign(currentUrlParts, { host: currentHost }));
-      var redirectUrl;
-      try {
-        redirectUrl = url.resolve(currentUrl, location);
-      } catch (cause) {
-        this.emit('error', new RedirectionError(cause));
-        return;
-      }
-      debug('redirecting to', redirectUrl);
+      var redirectUrl = resolveUrl(location, currentUrl);
+      debug('redirecting to', redirectUrl.href);
       this._isRedirect = true;
-      var redirectUrlParts = url.parse(redirectUrl);
-      Object.assign(this._options, redirectUrlParts);
+      spreadUrlObject(redirectUrl, this._options);
       if (
-        (redirectUrlParts.protocol !== currentUrlParts.protocol &&
-          redirectUrlParts.protocol !== 'https:') ||
-        (redirectUrlParts.host !== currentHost && !isSubdomain(redirectUrlParts.host, currentHost))
+        (redirectUrl.protocol !== currentUrlParts.protocol && redirectUrl.protocol !== 'https:') ||
+        (redirectUrl.host !== currentHost && !isSubdomain(redirectUrl.host, currentHost))
       ) {
         removeMatchingHeaders(/^(?:authorization|cookie)$/i, this._options.headers);
       }
-      if (typeof this._options.beforeRedirect === 'function') {
-        var responseDetails = { headers: response.headers };
-        try {
-          this._options.beforeRedirect.call(null, this._options, responseDetails);
-        } catch (err) {
-          this.emit('error', err);
-          return;
-        }
+      if (isFunction(beforeRedirect)) {
+        var responseDetails = {
+          headers: response.headers,
+          statusCode
+        };
+        var requestDetails = {
+          url: currentUrl,
+          method,
+          headers: requestHeaders
+        };
+        beforeRedirect(this._options, responseDetails, requestDetails);
         this._sanitizeOptions(this._options);
       }
-      try {
-        this._performRequest();
-      } catch (cause) {
-        this.emit('error', new RedirectionError(cause));
-      }
+      this._performRequest();
     };
     function wrap(protocols) {
       var exports3 = {
@@ -5699,21 +5737,16 @@ var require_follow_redirects = __commonJS({
         var nativeProtocol = (nativeProtocols[protocol] = protocols[scheme]);
         var wrappedProtocol = (exports3[scheme] = Object.create(nativeProtocol));
         function request(input, options, callback) {
-          if (typeof input === 'string') {
-            var urlStr = input;
-            try {
-              input = urlToOptions(new URL2(urlStr));
-            } catch (err) {
-              input = url.parse(urlStr);
-            }
-          } else if (URL2 && input instanceof URL2) {
-            input = urlToOptions(input);
+          if (isURL(input)) {
+            input = spreadUrlObject(input);
+          } else if (isString(input)) {
+            input = spreadUrlObject(parseUrl(input));
           } else {
             callback = options;
-            options = input;
+            options = validateUrl(input);
             input = { protocol };
           }
-          if (typeof options === 'function') {
+          if (isFunction(options)) {
             callback = options;
             options = null;
           }
@@ -5726,6 +5759,9 @@ var require_follow_redirects = __commonJS({
             options
           );
           options.nativeProtocols = nativeProtocols;
+          if (!isString(options.host) && !isString(options.hostname)) {
+            options.hostname = '::1';
+          }
           assert.equal(options.protocol, protocol, 'protocol mismatch');
           debug('options', options);
           return new RedirectableRequest(options, callback);
@@ -5743,22 +5779,43 @@ var require_follow_redirects = __commonJS({
       return exports3;
     }
     function noop() {}
-    function urlToOptions(urlObject) {
-      var options = {
-        protocol: urlObject.protocol,
-        hostname: urlObject.hostname.startsWith('[')
-          ? urlObject.hostname.slice(1, -1)
-          : urlObject.hostname,
-        hash: urlObject.hash,
-        search: urlObject.search,
-        pathname: urlObject.pathname,
-        path: urlObject.pathname + urlObject.search,
-        href: urlObject.href
-      };
-      if (urlObject.port !== '') {
-        options.port = Number(urlObject.port);
+    function parseUrl(input) {
+      var parsed;
+      if (useNativeURL) {
+        parsed = new URL2(input);
+      } else {
+        parsed = validateUrl(url.parse(input));
+        if (!isString(parsed.protocol)) {
+          throw new InvalidUrlError({ input });
+        }
       }
-      return options;
+      return parsed;
+    }
+    function resolveUrl(relative, base) {
+      return useNativeURL ? new URL2(relative, base) : parseUrl(url.resolve(base, relative));
+    }
+    function validateUrl(input) {
+      if (/^\[/.test(input.hostname) && !/^\[[:0-9a-f]+\]$/i.test(input.hostname)) {
+        throw new InvalidUrlError({ input: input.href || input });
+      }
+      if (/^\[/.test(input.host) && !/^\[[:0-9a-f]+\](:\d+)?$/i.test(input.host)) {
+        throw new InvalidUrlError({ input: input.href || input });
+      }
+      return input;
+    }
+    function spreadUrlObject(urlObject, target) {
+      var spread = target || {};
+      for (var key of preservedUrlFields) {
+        spread[key] = urlObject[key];
+      }
+      if (spread.hostname.startsWith('[')) {
+        spread.hostname = spread.hostname.slice(1, -1);
+      }
+      if (spread.port !== '') {
+        spread.port = Number(spread.port);
+      }
+      spread.path = spread.search ? spread.pathname + spread.search : spread.pathname;
+      return spread;
     }
     function removeMatchingHeaders(regex, headers) {
       var lastValue;
@@ -5772,32 +5829,49 @@ var require_follow_redirects = __commonJS({
         ? void 0
         : String(lastValue).trim();
     }
-    function createErrorType(code, defaultMessage) {
-      function CustomError(cause) {
+    function createErrorType(code, message, baseClass) {
+      function CustomError(properties) {
         Error.captureStackTrace(this, this.constructor);
-        if (!cause) {
-          this.message = defaultMessage;
-        } else {
-          this.message = defaultMessage + ': ' + cause.message;
-          this.cause = cause;
-        }
+        Object.assign(this, properties || {});
+        this.code = code;
+        this.message = this.cause ? message + ': ' + this.cause.message : message;
       }
-      CustomError.prototype = new Error();
-      CustomError.prototype.constructor = CustomError;
-      CustomError.prototype.name = 'Error [' + code + ']';
-      CustomError.prototype.code = code;
+      CustomError.prototype = new (baseClass || Error)();
+      Object.defineProperties(CustomError.prototype, {
+        constructor: {
+          value: CustomError,
+          enumerable: false
+        },
+        name: {
+          value: 'Error [' + code + ']',
+          enumerable: false
+        }
+      });
       return CustomError;
     }
-    function abortRequest(request) {
-      for (var e = 0; e < events.length; e++) {
-        request.removeListener(events[e], eventHandlers[events[e]]);
+    function destroyRequest(request, error) {
+      for (var event of events) {
+        request.removeListener(event, eventHandlers[event]);
       }
       request.on('error', noop);
-      request.abort();
+      request.destroy(error);
     }
     function isSubdomain(subdomain, domain) {
-      const dot = subdomain.length - domain.length - 1;
+      assert(isString(subdomain) && isString(domain));
+      var dot = subdomain.length - domain.length - 1;
       return dot > 0 && subdomain[dot] === '.' && subdomain.endsWith(domain);
+    }
+    function isString(value) {
+      return typeof value === 'string' || value instanceof String;
+    }
+    function isFunction(value) {
+      return typeof value === 'function';
+    }
+    function isBuffer(value) {
+      return typeof value === 'object' && 'length' in value;
+    }
+    function isURL(value) {
+      return URL2 && value instanceof URL2;
     }
     module2.exports = wrap({ http, https });
     module2.exports.wrap = wrap;
