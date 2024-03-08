@@ -44,7 +44,7 @@ This action will open a PagerDuty Maintenance Window for the specified service f
       - name: Open a window
         id: open-window
         # You may also reference just the major or major.minor version
-        uses: im-open/open-pagerduty-maintenance-window@v1.2.5
+        uses: im-open/open-pagerduty-maintenance-window@v1.3.0
         with:
           pagerduty-api-key: ${{secrets.PAGERDUTY_API_KEY}}
           description: 'Code deployment from GitHub Actions'
@@ -107,7 +107,7 @@ This project has adopted the [im-open's Code of Conduct](https://github.com/im-o
 
 ## License
 
-Copyright &copy; 2023, Extend Health, LLC. Code released under the [MIT license](LICENSE).
+Copyright &copy; 2024, Extend Health, LLC. Code released under the [MIT license](LICENSE).
 
 <!-- Links -->
 [Incrementing the Version]: #incrementing-the-version
