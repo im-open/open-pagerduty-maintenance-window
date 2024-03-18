@@ -14245,7 +14245,8 @@ var require_follow_redirects = __commonJS({
       'port',
       'protocol',
       'query',
-      'search'
+      'search',
+      'hash'
     ];
     var events = ['abort', 'aborted', 'connect', 'error', 'socket', 'timeout'];
     var eventHandlers = Object.create(null);
@@ -14543,7 +14544,7 @@ var require_follow_redirects = __commonJS({
         (redirectUrl.protocol !== currentUrlParts.protocol && redirectUrl.protocol !== 'https:') ||
         (redirectUrl.host !== currentHost && !isSubdomain(redirectUrl.host, currentHost))
       ) {
-        removeMatchingHeaders(/^(?:authorization|cookie)$/i, this._options.headers);
+        removeMatchingHeaders(/^(?:(?:proxy-)?authorization|cookie)$/i, this._options.headers);
       }
       if (isFunction(beforeRedirect)) {
         var responseDetails = {

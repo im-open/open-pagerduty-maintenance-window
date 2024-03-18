@@ -37,14 +37,14 @@ This action will open a PagerDuty Maintenance Window for the specified service f
 ```yml
   jobs:
     deploy-the-code:
-    runs-on: [self-hosted, ubuntu-20.04]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3
 
       - name: Open a window
         id: open-window
         # You may also reference just the major or major.minor version
-        uses: im-open/open-pagerduty-maintenance-window@v1.3.0
+        uses: im-open/open-pagerduty-maintenance-window@v1.3.1
         with:
           pagerduty-api-key: ${{secrets.PAGERDUTY_API_KEY}}
           description: 'Code deployment from GitHub Actions'
