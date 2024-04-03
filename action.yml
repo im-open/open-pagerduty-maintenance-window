@@ -1,5 +1,5 @@
 name: Open a PagerDuty Maintenance Window
-description: Opens a PagerDuty maintenance window for the specified service and amount of time.
+description: Opens a PagerDuty maintenance window for the specified service and amount of time. f
 
 inputs:
   pagerduty-api-key:
