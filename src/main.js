@@ -18,6 +18,7 @@ if (!serviceIdInput && !serviceIdsInput) {
   return;
 }
 
+console.log('hi!');
 core.info(`Opening PagerDuty window for ${description}`);
 
 try {
