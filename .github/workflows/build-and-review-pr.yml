@@ -21,6 +21,10 @@ on:
   #   without disabling that requirement.  If we have a status check that is always produced,
   #   we can also use that to require all branches be up to date before they are merged.
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   build-and-review-pr:
     # This reusable workflow will check to see if an action's source code has changed based on
@@ -34,7 +38,7 @@ jobs:
     # This workflow assumes:
     #  - The main README.md is at the root of the repo
     #  - The README contains a contribution guidelines and usage examples section
-    uses: im-open/.github/.github/workflows/reusable-build-and-review-pr.yml@v1
+    uses: im-open/.github/.github/workflows/reusable-build-and-review-pr.yml@v2
     with:
       action-name: ${{ github.repository }}
       default-branch: main
@@ -62,6 +66,7 @@ jobs:
       build-command: 'npm run build'
 
   test:
+    if: false # Uses a now archived repository for testing, figure out what to do with this.
     runs-on: ubuntu-latest
 
     env:
@@ -86,7 +91,7 @@ jobs:
 
       - name: Create a pending commit status and kick off the external tests
         if: github.event.pull_request.head.repo.fork == false
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PIPELINE_BOT_PAT }} # Not available to forks
           script: |
